@@ -18,6 +18,7 @@ import com.zenith.util.timer.Timers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.rfresh2.EventConsumer.of;
@@ -180,19 +181,23 @@ public class AutoPatrol extends Module {
             }
 
             // 轻微移动解锁
-//            if (AutoPatrolPlugin.PLUGIN_CONFIG.enableMovementUnstuck) {
-//                boolean moveLeft = ThreadLocalRandom.current().nextBoolean();
-//                var movementInput = Input.builder()
-//                        .pressingLeft(moveLeft)
-//                        .pressingRight(!moveLeft)
-//                        .build();
-//                var movementRequest = InputRequest.builder()
-//                        .owner(this)
-//                        .input(movementInput)
-//                        .priority(MOVEMENT_PRIORITY)
-//                        .build();
-//                INPUTS.submit(movementRequest);
-//            }
+            if (AutoPatrolPlugin.PLUGIN_CONFIG.enableMovementUnstuck) {
+                // 轻微移动解锁
+                // 随机选择前/后/左/右方向
+                int dir = ThreadLocalRandom.current().nextInt(4);
+                double dx = 0, dz = 0;
+                switch (dir) {
+                    case 0 -> dx = 0.5;   // forward (positive X)
+                    case 1 -> dx = -0.5;  // backward (negative X)
+                    case 2 -> dz = 0.5;   // right (positive Z)
+                    case 3 -> dz = -0.5;  // left (negative Z)
+                }
+                double px = CACHE.getPlayerCache().getX() + dx;
+                double py = CACHE.getPlayerCache().getY();
+                double pz = CACHE.getPlayerCache().getZ() + dz;
+                Goal moveGoal = new GoalBlock((int) Math.round(px), (int) Math.round(py), (int) Math.round(pz));
+                BARITONE.pathTo(moveGoal);
+            }
 
         }, 0, 50, TimeUnit.MILLISECONDS);
 
